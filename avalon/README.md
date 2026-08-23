@@ -14,26 +14,32 @@ This directory links LuminaOS with the Avalon repository:
 - Yggdrasil config templates specialized for Avalon nodes
 - Peer Public Key registry
 
+## Peer Connection (Live)
+
+The Avalon peers are now programmatically available inside LuminaOS:
+
+```python
+from nexus.avalon_peers import AVALON_PEERS, peer_status_report, get_peer_by_name
+
+print(peer_status_report())
+```
+
+File: `nexus/avalon_peers.py`
+
 ## Integration Points
 
 | LuminaOS Component       | Avalon Counterpart                     |
 |--------------------------|----------------------------------------|
 | Yggdrasil Mesh           | `nodes/yggdrasil-hannover-*.conf`      |
-| Agentenschwarm           | `peers/list.md` (47 named peers)       |
+| Agentenschwarm           | `nexus/avalon_peers.py` + `peers/list.md` |
 | NodeInfo / Identity      | Avalon NodeInfo fields                 |
 | Logging / Status         | `logs/protocol-round-*.md`             |
 | Public Keys              | `peers/public-keys.md`                 |
-
-## How to use
-
-1. Clone or reference the Avalon repository alongside LuminaOS.
-2. Use the Avalon Yggdrasil configs for the four Hannover nodes.
-3. Map Avalon peer names into the Agentenschwarm identities.
-4. Feed protocol round results into LuminaOS monitoring.
 
 ## Status
 
 - Avalon repository initialized: 2026-08-23
 - Yggdrasil configs for all four Hannover nodes available
 - First Protocol Round logged
-- Ready for deep integration with `nexus/agent_swarm.py` and `lumina/luminaos.py`
+- **Avalon Peer Connection layer active** (`nexus/avalon_peers.py`)
+- Ready for deeper binding into `agent_swarm.py` and `luminaos.py`
