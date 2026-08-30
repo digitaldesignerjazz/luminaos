@@ -2,58 +2,64 @@
 
 **Agentic Operating System** for the Nexus stack.
 
+Mesh-Transport seit 2026-08-30: **NetBird** (WireGuard overlay, Cloud-Control-Plane).
+Yggdrasil und Headscale bleiben als Legacy-Referenz in `config/`.
+
 ## Components
 
 | Layer | Description |
 |-------|-------------|
 | **Orchestrator** | Central task decomposition and agent coordination |
 | **Agentenschwarm** | Perception, Planner, Executor, Critic, Memory |
-| **Mesh** | Yggdrasil (IPv6 overlay) + Headscale (WireGuard coordination) |
+| **Mesh** | NetBird (`wt0`, `100.x` CGNAT overlay) |
 | **Avalon** | Peer coordination layer (47 Peers + 4 Hannover Nodes) |
 | **LuminaOS** | Boot orchestrator tying mesh + swarm + Avalon together |
 
 ## Quick Start
 
 ```bash
+# NetBird Client (einmal)
+curl -fsSL https://pkgs.netbird.io/install.sh | sh
+netbird up
+# oder headless:
+# netbird up --setup-key "$NETBIRD_SETUP_KEY"
+
+# Mesh-Helper
+./nexus/start_netbird.sh
+
 # Agentenschwarm
 python3 nexus/agent_swarm.py
 
-# Full LuminaOS boot (mesh status + swarm)
+# Full LuminaOS boot (NetBird status + swarm)
 python3 lumina/luminaos.py
-
-# Yggdrasil
-cp config/yggdrasil.conf.example /etc/yggdrasil/yggdrasil.conf
-# Set your PrivateKey (yggdrasil -genconf)
-./nexus/start_yggdrasil.sh
 ```
+
+Dashboard: https://app.netbird.io
 
 ## Avalon Integration
 
-Avalon is the peer & protocol layer of the Nexus ecosystem.
+Avalon bleibt die Namens- und Peer-Schicht. Der Transport darunter ist NetBird.
 
 → Repository: https://github.com/digitaldesignerjazz/avalon  
 → Local docs: [`avalon/README.md`](avalon/README.md)
-
-Avalon provides:
-- 47 named Peers
-- Hannover Nord / Süd / West / Ost nodes
-- Yggdrasil config templates for the four nodes
-- Protocol Rounds & Direct Send logging
 
 ## Structure
 
 ```
 luminaos/
 ├── lumina/
-│   └── luminaos.py          # Main boot / status
+│   └── luminaos.py          # Main boot / status (NetBird-aware)
 ├── nexus/
 │   ├── agent_swarm.py       # Multi-agent system
-│   └── start_yggdrasil.sh   # Mesh helper
+│   ├── avalon_peers.py      # Named Avalon peers
+│   ├── start_netbird.sh     # Mesh helper (aktiv)
+│   └── start_yggdrasil.sh   # Legacy
 ├── avalon/
-│   └── README.md            # Avalon integration
+│   └── README.md
 └── config/
-    ├── yggdrasil.conf.example
-    └── headscale.yaml.example
+    ├── netbird.env.example
+    ├── yggdrasil.conf.example   # Legacy
+    └── headscale.yaml.example   # Legacy
 ```
 
 ## License

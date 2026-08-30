@@ -1,34 +1,60 @@
 #!/usr/bin/env python3
 """
 LuminaOS – Agentic Operating System Prototype
-Nexus Layer: Orchestrator + Agentenschwarm + Mesh Awareness
+Nexus Layer: Orchestrator + Agentenschwarm + NetBird Mesh Awareness
 """
 import asyncio
 import subprocess
 from datetime import datetime
 
+
 def run_cmd(cmd):
     try:
-        r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=5)
+        r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=8)
         return r.stdout.strip() or r.stderr.strip()
     except Exception as e:
         return str(e)
 
+
+def _first_line_matching(text, needles):
+    for line in text.splitlines():
+        low = line.lower()
+        if any(n.lower() in low for n in needles):
+            return line.strip()
+    return ""
+
+
 async def mesh_status():
     print("\n🌐 MESH LAYER")
     print("-" * 40)
-    hs = run_cmd("curl -s http://127.0.0.1:8080/health 2>/dev/null || curl -sk https://headscale.esslinger.consulting/health 2>/dev/null")
-    print(f"  Headscale: {hs or 'offline'}")
-    ygg = run_cmd("yggdrasilctl -endpoint=tcp://127.0.0.1:9001 getSelf 2>/dev/null | head -10")
-    if "IPv6 address" in ygg or "Build name" in ygg:
-        print("  Yggdrasil: online")
-        for line in ygg.splitlines():
-            if "IPv6 address" in line or "Build version" in line or "Public key" in line:
-                print(f"    {line.strip()}")
+    if not run_cmd("command -v netbird"):
+        print("  NetBird: nicht installiert")
+        print("  Install: curl -fsSL https://pkgs.netbird.io/install.sh | sh")
+        return
+
+    status = run_cmd("netbird status")
+    connected = "connected" in status.lower() and "disconnected" not in status.splitlines()[0].lower() if status else False
+    if "Daemon status" in status or "Management" in status or "NetBird IP" in status:
+        daemon = _first_line_matching(status, ["Daemon status", "Status"]) or ("Connected" if "Connected" in status else "unknown")
+        mgmt = _first_line_matching(status, ["Management"]) or "—"
+        ip = _first_line_matching(status, ["NetBird IP", "IP Address", "IP:"]) or "—"
+        iface = _first_line_matching(status, ["Interface", "WG interface"]) or "wt0"
+        peers = _first_line_matching(status, ["Peers", "Peers count"]) or "Peers: ?"
+        print(f"  NetBird: {daemon}")
+        print(f"    {mgmt}")
+        print(f"    {ip}")
+        print(f"    {iface}")
+        print(f"    {peers}")
     else:
-        print("  Yggdrasil: offline / no admin")
-    peers = run_cmd("yggdrasilctl -endpoint=tcp://127.0.0.1:9001 getPeers 2>/dev/null | grep -c 'Up' || echo 0")
-    print(f"  Yggdrasil Peers Up: {peers}")
+        print("  NetBird: offline / kein Status")
+        if status:
+            print(f"    {status.splitlines()[0][:80]}")
+
+    wt0 = run_cmd("ip -4 addr show wt0 2>/dev/null | awk '/inet / {print $2}'")
+    print(f"  Interface wt0: {wt0 or 'nicht vorhanden'}")
+    if connected or "Connected" in status:
+        print("  Overlay: bereit")
+
 
 async def swarm_status():
     print("\n🤖 AGENTENSCHWARM")
@@ -49,9 +75,10 @@ async def swarm_status():
             (MemoryAgent, "Memory", "Gedächtnis"),
         ]:
             swarm.register_agent(cls(name, role, memory))
-        await swarm.run("LuminaOS Boot – Mesh + Swarm Status erfassen und Nexus bereit melden")
+        await swarm.run("LuminaOS Boot – NetBird Mesh + Swarm Status erfassen und Nexus bereit melden")
     except Exception as e:
         print(f"  Swarm Fehler: {e}")
+
 
 async def main():
     print("=" * 60)
@@ -61,8 +88,9 @@ async def main():
     await mesh_status()
     await swarm_status()
     print("\n" + "=" * 60)
-    print("  LUMINA OS online – Nexus Stack bereit")
+    print("  LUMINA OS online – Nexus Stack bereit (NetBird)")
     print("=" * 60)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

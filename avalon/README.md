@@ -6,17 +6,20 @@ This directory links LuminaOS with the Avalon repository:
 
 → https://github.com/digitaldesignerjazz/avalon
 
+## Transport
+
+Seit 2026-08-30 läuft der Overlay-Transport über **NetBird** (`wt0`, Adressen `100.x`).
+Avalon-Namen (47 Peers + 4 Hannover-Knoten) bleiben. Yggdrasil-Templates sind Legacy.
+
 ## What Avalon provides
 
 - 47 named Peers (Agenten-Identitäten)
 - 4 Hannover Nodes (Nord / Süd / West / Ost)
 - Protocol Rounds & Direct Send
-- Yggdrasil config templates specialized for Avalon nodes
 - Peer Public Key registry
+- Legacy Yggdrasil templates (nicht mehr der aktive Pfad)
 
 ## Peer Connection (Live)
-
-The Avalon peers are now programmatically available inside LuminaOS:
 
 ```python
 from nexus.avalon_peers import AVALON_PEERS, peer_status_report, get_peer_by_name
@@ -26,11 +29,17 @@ print(peer_status_report())
 
 File: `nexus/avalon_peers.py`
 
+Geräte in Avalon onboarding:
+
+```bash
+netbird up --setup-key "$NETBIRD_SETUP_KEY"
+```
+
 ## Integration Points
 
 | LuminaOS Component       | Avalon Counterpart                     |
 |--------------------------|----------------------------------------|
-| Yggdrasil Mesh           | `nodes/yggdrasil-hannover-*.conf`      |
+| NetBird Overlay          | Setup-Keys + Peer-Gruppen              |
 | Agentenschwarm           | `nexus/avalon_peers.py` + `peers/list.md` |
 | NodeInfo / Identity      | Avalon NodeInfo fields                 |
 | Logging / Status         | `logs/protocol-round-*.md`             |
@@ -39,7 +48,5 @@ File: `nexus/avalon_peers.py`
 ## Status
 
 - Avalon repository initialized: 2026-08-23
-- Yggdrasil configs for all four Hannover nodes available
-- First Protocol Round logged
-- **Avalon Peer Connection layer active** (`nexus/avalon_peers.py`)
-- Ready for deeper binding into `agent_swarm.py` and `luminaos.py`
+- Transport umgestellt auf NetBird: 2026-08-30
+- Avalon Peer Connection layer active (`nexus/avalon_peers.py`)
